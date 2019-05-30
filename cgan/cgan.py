@@ -1,5 +1,8 @@
 from __future__ import print_function, division
 
+
+
+
 from keras.datasets import mnist
 from keras.layers import Input, Dense, Reshape, Flatten, Dropout, multiply
 from keras.layers import BatchNormalization, Activation, Embedding, ZeroPadding2D
@@ -11,6 +14,14 @@ from keras.optimizers import Adam
 import matplotlib.pyplot as plt
 
 import numpy as np
+import sys
+import os
+
+scriptpath = "cgan/shapes_generator.py"
+
+# Add the directory containing your module to the Python path (wants absolute paths)
+sys.path.append(os.path.abspath(scriptpath))
+from shapes_generator import generateLabeledDataset
 
 class CGAN():
     def __init__(self):
@@ -158,6 +169,63 @@ class CGAN():
             if epoch % sample_interval == 0:
                 self.sample_images(epoch)
 
+
+    def trainOnDataset(self, X_train, y_train, epochs, batch_size=128, sample_interval=50):
+
+        # # Load the dataset
+        # (X_temp, y_temp), (_, _) = mnist.load_data()
+        # X_temp = np.expand_dims(X_temp, axis=3)
+        # y_temp = y_temp.reshape(-1, 1)
+        # X_train = datasetX
+        # y_train = datasetY
+
+        # Configure input
+        X_train = (X_train.astype(np.float32) - 127.5) / 127.5
+        # X_train = np.expand_dims(X_train, axis=3)
+        # y_train = y_train.reshape(-1)
+
+        # Adversarial ground truths
+        valid = np.ones((batch_size, 1))
+        fake = np.zeros((batch_size, 1))
+
+        for epoch in range(epochs):
+
+            # ---------------------
+            #  Train Discriminator
+            # ---------------------
+
+            # Select a random half batch of images
+            idx = np.random.randint(0, X_train.shape[0], batch_size)
+            imgs, labels = X_train[idx], y_train[idx]
+
+            # Sample noise as generator input
+            noise = np.random.normal(0, 1, (batch_size, 100))
+
+            # Generate a half batch of new images
+            gen_imgs = self.generator.predict([noise, labels])
+
+            # Train the discriminator
+            d_loss_real = self.discriminator.train_on_batch([imgs, labels], valid)
+            d_loss_fake = self.discriminator.train_on_batch([gen_imgs, labels], fake)
+            d_loss = 0.5 * np.add(d_loss_real, d_loss_fake)
+
+            # ---------------------
+            #  Train Generator
+            # ---------------------
+
+            # Condition on labels
+            sampled_labels = np.random.randint(0, 10, batch_size).reshape(-1, 1)
+
+            # Train the generator
+            g_loss = self.combined.train_on_batch([noise, sampled_labels], valid)
+
+            # Plot the progress
+            print ("%d [D loss: %f, acc.: %.2f%%] [G loss: %f]" % (epoch, d_loss[0], 100*d_loss[1], g_loss))
+
+            # If at save interval => save generated image samples
+            if epoch % sample_interval == 0:
+                self.sample_images(epoch)
+
     def sample_images(self, epoch):
         r, c = 2, 5
         noise = np.random.normal(0, 1, (r * c, 100))
@@ -182,4 +250,8 @@ class CGAN():
 
 if __name__ == '__main__':
     cgan = CGAN()
-    cgan.train(epochs=20000, batch_size=32, sample_interval=200)
+    # cgan.train(epochs=20000, batch_size=32, sample_interval=200)
+    images, labels = generateLabeledDataset(100, (32,32), (3,3))
+    cgan.trainOnDataset(images, labels, 100)
+
+    
