@@ -17,6 +17,37 @@ import numpy as np
 import sys
 import os
 
+# https://github.com/miranthajayatilake/CGAN-Keras
+# https://medium.com/@utk.is.here/training-a-conditional-dc-gan-on-cifar-10-fce88395d610
+# https://github.com/r0nn13/conditional-dcgan-keras
+# https://arxiv.org/pdf/1610.09585.pdf
+# https://arxiv.org/pdf/1411.1784.pdf
+# http://cs231n.stanford.edu/reports/2017/pdfs/316.pdf
+# https://eccv2018.org/openaccess/content_ECCV_2018/papers/Xinyuan_Chen_Attention-GAN_for_Object_ECCV_2018_paper.pdf
+# https://openreview.net/forum?id=rJedV3R5tm
+# http://bmvc2018.org/contents/papers/0247.pdf
+# https://www.researchgate.net/publication/324783775_Text_to_Image_Synthesis_Using_Generative_Adversarial_Networks
+# https://skymind.ai/wiki/generative-adversarial-network-gan
+# https://antonia.space/text-to-video-generation
+# https://hci.iwr.uni-heidelberg.de/system/files/private/downloads/1009852523/frank_gabel_eml2018_report.pdf
+# https://www.groundai.com/project/dm-gan-dynamic-memory-generative-adversarial-networks-for-text-to-image-synthesis/
+# https://www.topbots.com/ai-research-generative-adversarial-network-images/
+# https://papers.nips.cc/paper/7290-text-adaptive-generative-adversarial-networks-manipulating-images-with-natural-language.pdf
+# http://openaccess.thecvf.com/content_cvpr_2018/papers/Xu_AttnGAN_Fine-Grained_Text_CVPR_2018_paper.pdf
+# http://proceedings.mlr.press/v48/reed16.pdf
+# https://codeburst.io/understanding-attngan-text-to-image-convertor-a79f415a4e89
+# https://github.com/zsdonghao/text-to-image
+# https://github.com/crisbodnar/text-to-image
+
+
+# https://github.com/kcct-fujimotolab/StackGAN
+# https://arxiv.org/pdf/1612.03242.pdf
+
+
+# http://cican17.com/gan-from-zero-to-hero-part-2-conditional-generation-by-gan/
+# https://www.pyimagesearch.com/2019/02/04/keras-multiple-inputs-and-mixed-data/
+# https://github.com/PacktPublishing/Advanced-Deep-Learning-with-Keras/tree/master/chapter4-gan
+
 scriptpath = "cgan/shapes_generator.py"
 
 # Add the directory containing your module to the Python path (wants absolute paths)
@@ -24,13 +55,16 @@ sys.path.append(os.path.abspath(scriptpath))
 from shapes_generator import generateLabeledDataset
 
 class CGAN():
-    def __init__(self):
+    def __init__(self, imageShape, labelsShape):
         # Input shape
-        self.img_rows = 28
-        self.img_cols = 28
-        self.channels = 1
+        height, width, depth = imageShape
+        
+        self.img_rows = height
+        self.img_cols = width
+        self.channels = depth
         self.img_shape = (self.img_rows, self.img_cols, self.channels)
-        self.num_classes = 10
+        # self.num_classes = 10
+        self.num_shapes = labelsShape[0]
         self.latent_dim = 100
 
         optimizer = Adam(0.0002, 0.5)
@@ -82,8 +116,10 @@ class CGAN():
         model.summary()
 
         noise = Input(shape=(self.latent_dim,))
-        label = Input(shape=(1,), dtype='int32')
-        label_embedding = Flatten()(Embedding(self.num_classes, self.latent_dim)(label))
+        # label = Input(shape=(1,), dtype='int32')
+        label = Input(shape=(self.num_shapes,), dtype='float32')
+
+        label_embedding = Flatten()(Embedding(self.num_shapes, self.latent_dim)(label))
 
         model_input = multiply([noise, label_embedding])
         img = model(model_input)
@@ -106,9 +142,10 @@ class CGAN():
         model.summary()
 
         img = Input(shape=self.img_shape)
-        label = Input(shape=(1,), dtype='int32')
+        # label = Input(shape=(1,), dtype='int32')
+        label = Input(shape=(self.num_shapes,), dtype='float32')
 
-        label_embedding = Flatten()(Embedding(self.num_classes, np.prod(self.img_shape))(label))
+        label_embedding = Flatten()(Embedding(self.num_shapes, np.prod(self.img_shape))(label))
         flat_img = Flatten()(img)
 
         model_input = multiply([flat_img, label_embedding])
@@ -183,6 +220,7 @@ class CGAN():
         X_train = (X_train.astype(np.float32) - 127.5) / 127.5
         # X_train = np.expand_dims(X_train, axis=3)
         # y_train = y_train.reshape(-1)
+        y_train = y_train / np.max(y_train)
 
         # Adversarial ground truths
         valid = np.ones((batch_size, 1))
@@ -249,9 +287,12 @@ class CGAN():
 
 
 if __name__ == '__main__':
-    cgan = CGAN()
     # cgan.train(epochs=20000, batch_size=32, sample_interval=200)
     images, labels = generateLabeledDataset(100, (32,32), (3,3))
+
+    cgan = CGAN(images[0].shape, labels[0].shape)
+
+
     cgan.trainOnDataset(images, labels, 100)
 
     
