@@ -12,7 +12,7 @@ import numpy as np
 def generateImageAndLabel(imageSize, objectsArrayShape):
     
     width, height = imageSize
-    imageShape = (height, width, 3)
+    imageShape = (height, width, 1)
 
     # przerobić macierz kodującą na float z zakresu [0.0 - 1.0]
     arr = np.reshape(randint(0, 4, objectsArrayShape[0]* objectsArrayShape[1] ), objectsArrayShape)
