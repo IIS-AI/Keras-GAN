@@ -76,8 +76,24 @@ def generateImage_SingleShape(imageSize, shapeID):
     minWidth = width // 4
     minHeight = height // 4
 
-    #square
+    lineThickness = max(1, width//32)
+
+
+    # square (lines only)
     if shapeID is 0:
+
+        squareMaxDimension = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2)))
+        squareDimmension = randint(min(minWidth, minHeight), squareMaxDimension)
+
+        topLeft = (randint(math.ceil(width*margin), width - math.ceil(width*margin) - squareDimmension), 
+                    randint(math.ceil(height*margin), height - math.ceil(height*margin) - squareDimmension) )
+        
+        bottomRight = tuple(sum(x) for x in zip(topLeft, (squareDimmension, squareDimmension)))
+        cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), thickness=lineThickness)
+
+
+    #square (filled)
+    elif shapeID is 1:
 
         squareMaxDimension = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2)))
         squareDimmension = randint(min(minWidth, minHeight), squareMaxDimension)
@@ -89,7 +105,18 @@ def generateImage_SingleShape(imageSize, shapeID):
         cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), cv2.FILLED)
 
     # circle
-    if shapeID is 1:
+    elif shapeID is 2:
+
+        maxRadius = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2))) //2
+        radius = randint((min(minWidth, minHeight)), maxRadius)
+
+        center = (randint(math.ceil(width*margin) + radius, width - math.ceil(width*margin) - radius), 
+            randint( radius + math.ceil(height*margin), height - math.ceil(height*margin) - radius) )
+
+        cv2.circle(img, center, radius, (255, 255, 255), thickness=lineThickness)
+    
+    # circle
+    elif shapeID is 3:
 
         maxRadius = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2))) //2
         radius = randint((min(minWidth, minHeight)), maxRadius)
@@ -100,7 +127,24 @@ def generateImage_SingleShape(imageSize, shapeID):
         cv2.circle(img, center, radius, (255, 255, 255), cv2.FILLED)
     
     #triangle
-    elif shapeID is 2:
+    elif shapeID is 4:
+        
+        maxSize = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2)))
+        size = randint(10, maxSize)
+
+        center = (randint(math.ceil(width*margin) + size//2, width - math.ceil(width*margin) - size//2), 
+            randint( math.ceil(height*margin +  size//2), height - math.ceil(height*margin) - size//2) )
+        
+        Point1 = [center[0], center[1] - size//2 + size//8]
+        Point2 = [center[0] - size//2 + size//8, center[1] + size//2 - size//8]
+        Point3 = [center[0] + size//2 - size//8, center[1] + size//2 - size//8]
+        pts = np.array([Point1, Point2, Point3 ], np.int32)
+        pts = pts.reshape((-1,1,2))
+        cv2.polylines(img, [pts], True, (255, 255 ,255))
+        # cv2.fillPoly(img, [pts], (255, 255, 255))
+    
+    #triangle (filled)
+    elif shapeID is 5:
         
         maxSize = min(width - math.ceil(width*(margin*2)), height - math.ceil(height*(margin*2)))
         size = randint(10, maxSize)
@@ -117,7 +161,24 @@ def generateImage_SingleShape(imageSize, shapeID):
         cv2.fillPoly(img, [pts], (255, 255, 255))
     
     #rectangle (narrow)
-    elif shapeID is 3:
+    elif shapeID is 6:
+        rectangleMaxWidth = (width - math.ceil(width*(margin*2)) )//2
+        rectangleMaxHeight = height - math.ceil(height*(margin*2))
+        
+        
+        rectangleWidth = randint(minWidth//2, rectangleMaxWidth)
+        rectangleHeight = randint(minHeight, rectangleMaxHeight)
+
+
+        topLeft = (randint(math.ceil((width*margin)), width - math.ceil(width*margin) - rectangleWidth ), 
+                    randint(math.ceil((height*margin)), height - math.ceil(height*margin) - rectangleHeight ))
+        
+        bottomRight = tuple(sum(x) for x in zip(topLeft, (rectangleWidth, rectangleHeight)))
+        
+        cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), thickness=lineThickness)
+
+    #rectangle (narrow, filled)
+    elif shapeID is 7:
         rectangleMaxWidth = (width - math.ceil(width*(margin*2)) )//2
         rectangleMaxHeight = height - math.ceil(height*(margin*2))
         
@@ -134,7 +195,24 @@ def generateImage_SingleShape(imageSize, shapeID):
         cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), cv2.FILLED)
 
     # rectangle (short)
-    elif shapeID is 4:
+    elif shapeID is 8:
+        rectangleMaxWidth = width - math.ceil(width*(margin*2))
+        rectangleMaxHeight = (height - math.ceil(height*(margin*2))) // 3
+        
+        
+        rectangleWidth = randint(minWidth, rectangleMaxWidth)
+        rectangleHeight = randint(minHeight//2, rectangleMaxHeight)
+
+
+        topLeft = (randint(math.ceil((width*margin)), width - math.ceil(width*margin) - rectangleWidth ), 
+                    randint(math.ceil((height*margin)), height - math.ceil(height*margin) - rectangleHeight ))
+        
+        bottomRight = tuple(sum(x) for x in zip(topLeft, (rectangleWidth, rectangleHeight)))
+        
+        cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), thickness=lineThickness)
+ 
+    # rectangle (short, filled)
+    elif shapeID is 9:
         rectangleMaxWidth = width - math.ceil(width*(margin*2))
         rectangleMaxHeight = (height - math.ceil(height*(margin*2))) // 3
         
@@ -151,6 +229,7 @@ def generateImage_SingleShape(imageSize, shapeID):
         cv2.rectangle(img, topLeft, bottomRight, (255, 255 , 255), cv2.FILLED)
 
     else:
+        a = 6
         pass
 
     return img
@@ -169,10 +248,12 @@ def generateLabeledDataset(quantity, imageSize, objectsArrayShape):
 
 def generateLabeledDataset_SingleShape(quantity, imageSize):
     imagesList = []
-    labelsList = randint(0, 6, size=(quantity, 1 ))
+    labelsList = randint(0, 11, size=(quantity, 1 ))
     for i, id in tqdm(enumerate(labelsList)):
         image = generateImage_SingleShape(imageSize, int(id) )
         imagesList.append(image)
+        # cv2.imshow("test", image)
+        # cv2.waitKey(300)
     
     images = np.array(imagesList)
 
