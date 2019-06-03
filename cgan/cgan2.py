@@ -193,10 +193,6 @@ def train(models, data, params):
         
         fake_labels = randint(0, 4, size = (batch_size, len(real_labels[1]) ) )
         fake_labels = fake_labels / np.max(fake_labels)
-        # fake_labels = []
-        # for i in range(batch_size):
-        #     fake_labels.append(randint(0, 4, len(real_labels[1])))
-        # fake_labels = np.array(fake_labels)
 
         # generate fake images conditioned on fake labels
         fake_images = generator.predict([noise, fake_labels])
@@ -307,7 +303,7 @@ def build_and_train_models():
     # y_train = to_categorical(y_train)
 
 
-    images, labels = generateLabeledDataset(1000, (28,28), (3,3))
+    images, labels = generateLabeledDataset(60000, (28,28), (3,3))
     
     images = images.astype('float32') / 255
     x_train = images

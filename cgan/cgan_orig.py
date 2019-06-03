@@ -173,9 +173,10 @@ class CGAN():
                 self.sample_images(epoch)
 
     def sample_images(self, epoch):
-        r, c = 2, 5
+        r, c = 2, 12
         noise = np.random.normal(0, 1, (r * c, 100))
-        sampled_labels = np.arange(0, 10).reshape(-1, 1)
+        # sampled_labels = np.arange(0, 10).reshape(-1, 1)
+        sampled_labels = np.arange(0, 6, 0.25).reshape(-1, 1)
 
         gen_imgs = self.generator.predict([noise, sampled_labels])
 
@@ -196,4 +197,4 @@ class CGAN():
 
 if __name__ == '__main__':
     cgan = CGAN()
-    cgan.train(epochs=20000, batch_size=32, sample_interval=200)
+    cgan.train(epochs=40000, batch_size=128, sample_interval=200)
